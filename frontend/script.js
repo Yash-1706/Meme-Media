@@ -101,16 +101,6 @@ function likeMeme(memeId, event) {
     });
 }
 
-// Download the meme image
-function downloadMeme(url) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = url.split('/').pop();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
 // Share the meme
 function shareMeme(url) {
     if (navigator.share) {
@@ -121,3 +111,14 @@ function shareMeme(url) {
         console.log('⚠️ Sharing is not supported on this browser.');
     }
 }
+
+// Download the meme image
+function downloadMeme(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = url.split('/').pop();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
