@@ -23,13 +23,13 @@ function fetchMemes() {
     fetch(url)
         .then(response => response.json())
         .then(data => {
-            console.log("✅ Memes fetched successfully.");
+            // console.log("✅ Memes fetched successfully.");
             let memes = data.data.children.map(post => ({
                 id: post.data.id,
                 url: post.data.url,
                 title: post.data.title
             }));
-            console.log("🖼 Processing memes:", memes);
+            // console.log("🖼 Processing memes:", memes);
             updateMemeList(memes);
         })
         .catch(error => console.error("❌ Error fetching memes:", error));
@@ -114,11 +114,16 @@ function shareMeme(url) {
 
 // Download the meme image
 function downloadMeme(url) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = url.split('/').pop();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    fetch(`http://localhost:3000/download?url=${encodeURIComponent(url)}`)
+        .then(response => response.blob()) // Convert response to a file
+        .then(blob => {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "meme.png"; // Set default filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        })
+        .catch(error => console.error("❌ Error downloading meme:", error));
 }
 
