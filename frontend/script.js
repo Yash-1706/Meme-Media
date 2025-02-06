@@ -144,3 +144,31 @@ function toggleLoadMoreButton(visible) {
         console.warn("⚠️ Attempted to toggle a missing Load More button.");
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOM fully loaded. Fetching memes...");
+    loadUploadedMemes(); // Load uploaded memes
+    fetchMemes();
+});
+
+// Function to load and display uploaded memes
+function loadUploadedMemes() {
+    const storedMemes = JSON.parse(localStorage.getItem("uploadedMemes")) || [];
+    const memeContainer = document.getElementById("meme-container");
+
+    storedMemes.forEach(memeUrl => {
+        let memeCard = document.createElement("div");
+        memeCard.classList.add("meme-card");
+
+        memeCard.innerHTML = `
+            <img src="${memeUrl}" alt="Uploaded Meme">
+            <div class="actions">
+                <button class="like-btn">👍 <span>0</span> Likes</button>
+                <button onclick="downloadMeme('${memeUrl}')">⬇️ Download</button>
+                <button onclick="shareMeme('${memeUrl}')">📤 Share</button>
+            </div>
+        `;
+
+        memeContainer.prepend(memeCard); // Add at the top
+    });
+}
