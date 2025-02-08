@@ -4,12 +4,12 @@ let memeLikes = {};  // Holds likes for each meme
 const API_URL = "http://localhost:3000";  // Backend URL for likes
 let after = null; // Stores the last post ID for pagination
 
-// Fetch memes and initialize likes (called once during page load)
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("✅ DOM fully loaded. Fetching memes...");
-    loadLikesFromLocalStorage();  // Load likes from localStorage first
-    fetchMemes();
+    const loadMoreBtn = document.getElementById("load-more-btn");
+    loadMoreBtn.replaceWith(loadMoreBtn.cloneNode(true)); // Clears previous listeners
+    document.getElementById("load-more-btn").addEventListener("click", loadMoreMemes);
 });
+
 
 
 if (loadMoreButton) {
@@ -18,35 +18,176 @@ if (loadMoreButton) {
     console.warn("⚠️ Load More button not found in the DOM.");
 }
 
+
 // Load likes from localStorage
 function loadLikesFromLocalStorage() {
     const storedLikes = localStorage.getItem("memeLikes");
     memeLikes = storedLikes ? JSON.parse(storedLikes) : {};
 }
 
-// Fetch memes from Reddit API with pagination
-function fetchMemes() {
-    let url = "https://www.reddit.com/r/ProgrammerHumor.json";
-    if (after) {
-        url += `?after=${after}`;
+let fetchingMemes = false // prevents duplicate fetches
+let fetchedMemes = new Set()
+
+// Fetch memes from Reddit 
+async function fetchMemes() {
+    if (fetchingMemes) return; // Stop if already fetching
+    fetchingMemes = true;
+
+    try {
+        const apiUrl = after 
+            ? `https://www.reddit.com/r/ProgrammerHumor.json?after=${after}`
+            : "https://www.reddit.com/r/ProgrammerHumor.json";
+
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        const newMemes = data.data.children
+            .map(post => post.data.url)
+            .filter(url => url.endsWith(".jpg") || url.endsWith(".png"));
+
+            after = data.data.after || null; // Store 'after' for pagination
+            if (newMemes.length > 0) {
+                displayMemes(newMemes); // Append new memes
+            } else {
+                console.warn("🚨 No new memes fetched!");
+            }
+
+        showLoadMoreButton();
+    } catch (error) {
+        console.error("❌ Error fetching memes:", error);
+    } finally {
+        fetchingMemes = false
     }
+}
+
+
+// Call fetchMemes() once when the page loads
+fetchMemes();
+
+
+//Download button
+function createDownloadButton(memeUrl) {
+    let downloadBtn = document.createElement("button");
+    downloadBtn.innerText = "⬇️ Download";
+    downloadBtn.classList.add("download-btn");
+
+    // Prevents redirection and downloads the meme
+    downloadBtn.addEventListener("click", (event) => downloadMeme(memeUrl, event));
+
+    return downloadBtn;
+}
+
+
+//Like button creation
+function createLikeButton(memeUrl) {
+    let likeBtn = document.createElement("button");
+    likeBtn.classList.add("like-btn");
+
+    let likes = memeLikes[memeUrl] || 0; // Ensure likes are initialized to 0
+
+    likeBtn.innerHTML = `❤️ <span id="likes-${memeUrl}">${likes}</span>`;
+
+    likeBtn.addEventListener("click", function () {
+        if (localStorage.getItem(`liked-${memeUrl}`)) {
+            console.log("❌ Already liked!");
+            alert("❌ Already Liked This Meme")
+            return; // Prevent multiple likes
+        }
+
+        likes++;
+        localStorage.setItem(`liked-${memeUrl}`, "true");
+        memeLikes[memeUrl] = likes;
+
+        // Update UI
+        document.getElementById(`likes-${memeUrl}`).textContent = likes;
+
+        // Save to backend
+        fetch("http://localhost:3000/like", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memeId: memeUrl, likes })
+        }).catch(err => console.error("❌ Failed to update like count:", err));
+    });
+
+    return likeBtn;
+}
+
+
+
+//Share button
+function createShareButton(memeUrl) {
+    let shareBtn = document.createElement("button");
+    shareBtn.innerText = "📤 Share";
+    shareBtn.classList.add("share-btn");
+
+    shareBtn.addEventListener("click", () => {
+        if (navigator.share) {
+            navigator.share({
+                title: "Check out this meme!",
+                url: memeUrl
+            }).catch(err => console.error("❌ Error sharing:", err));
+        } else {
+            alert("📤 Sharing not supported on this device.");
+        }
+    });
+
+    return shareBtn;
+}
+
+//Display memes
+let memesList = new Set(); // Store unique memes
+let memesPerPage = 25;
+let currentIndex = 0;
+
+async function displayMemes(memes) {
+    const memeContainer = document.getElementById("meme-container");
     
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            let memes = data.data.children.map(post => ({
-                id: post.data.id,
-                url: post.data.url,
-                title: post.data.title
-            }));
-            after = data.data.after; // Store next page ID for pagination
-            updateMemeList(memes);
-            toggleLoadMoreButton(true);
-        })
-        .catch(error => {
-            console.error("❌ Error fetching memes:", error);
-            toggleLoadMoreButton(false);
-        });
+    let newMemes = memes.filter(meme => !memesList.has(meme)); // Avoid duplicates
+    if (newMemes.length === 0) return; // If no new memes, don't proceed
+
+    newMemes.forEach(meme => memesList.add(meme)); // Add new memes to set
+
+    try {
+        const response = await fetch("http://localhost:3000/likes");
+        const storedLikes = await response.json();
+        memeLikes = storedLikes || {}; // Store likes globally
+    } catch (err) {
+        console.error("❌ Failed to fetch likes:", err);
+        return;
+    }
+
+    newMemes.forEach(memeUrl => {
+        let imgWrapper = document.createElement("div");
+        imgWrapper.classList.add("meme-wrapper");
+
+        let img = document.createElement("img");
+        img.src = memeUrl;
+        img.alt = "Meme";
+        img.classList.add("meme-item");
+
+        // Create buttons
+        let likeBtn = createLikeButton(memeUrl);
+        let downloadBtn = createDownloadButton(memeUrl);
+        let shareBtn = createShareButton(memeUrl);
+
+        imgWrapper.appendChild(img);
+        imgWrapper.appendChild(likeBtn);
+        imgWrapper.appendChild(downloadBtn);
+        imgWrapper.appendChild(shareBtn);
+
+        memeContainer.appendChild(imgWrapper);
+    });
+
+    console.log("✅ Memes with buttons added to DOM");
+}
+
+
+
+
+//Load more memes
+function loadMoreMemes(){
+    fetchingMemes = false
+    fetchMemes()
 }
 
 // Update the meme list in UI
@@ -55,12 +196,12 @@ function updateMemeList(memes) {
         let memeCard = document.createElement("div");
         memeCard.classList.add("meme-card");
         memeCard.setAttribute("data-meme-id", meme.id);
-
+        
         let likeCount = memeLikes[meme.id] || 0;
-
+        
         memeCard.innerHTML = `
-            <img src="${meme.url}" alt="${meme.title}">
-            <div class="actions">
+        <img src="${meme.url}" alt="${meme.title}">
+        <div class="actions">
                 <button class="like-btn" data-meme-id="${meme.id}" type="button">
                     👍 <span>${likeCount}</span> Likes
                 </button>
@@ -77,34 +218,37 @@ function updateMemeList(memes) {
 }
 
 // Like a meme
-function likeMeme(memeId, event) {
-    event.preventDefault();
-    let likeButton = event.target.closest(".like-btn");
-    if (!likeButton) return;
+// Function to handle like functionality (prevents multiple likes per user)
+async function likeMeme(memeId, event) {
+    const likeSpan = document.getElementById(`likes-${memeId}`);
 
-    let likeCountSpan = likeButton.querySelector("span");
-    if (!likeCountSpan) return;
+    // Check if the meme was already liked by the user
+    let likedMemes = JSON.parse(localStorage.getItem("likedMemes")) || {};
+    if (likedMemes[memeId]) {
+        alert("❌ You have already liked this meme!");
+        return;
+    }
 
-    let currentLikeCount = parseInt(likeCountSpan.innerText);
-    let newLikeCount = currentLikeCount + 1;
+    let currentLikes = parseInt(likeSpan.innerText) || 0;
+    currentLikes++;
 
-    likeCountSpan.innerText = newLikeCount;
+    likeSpan.innerText = currentLikes;
+    
+    // Save liked meme in localStorage
+    likedMemes[memeId] = true;
+    localStorage.setItem("likedMemes", JSON.stringify(likedMemes));
 
-    memeLikes[memeId] = newLikeCount;
-    localStorage.setItem("memeLikes", JSON.stringify(memeLikes));
-
-    fetch(`${API_URL}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memeId, likes: newLikeCount })
-    })
-    .then(res => res.json())
-    .then(data => console.log("✅ Like count updated on backend:", data))
-    .catch(err => {
-        console.error("❌ Error liking meme:", err);
-        likeCountSpan.innerText = currentLikeCount;
-    });
+    try {
+        await fetch("http://localhost:3000/like", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memeId, likes: currentLikes })
+        });
+    } catch (error) {
+        console.error("❌ Error updating like:", error);
+    }
 }
+
 
 // Share the meme
 function shareMeme(url) {
@@ -118,57 +262,39 @@ function shareMeme(url) {
 }
 
 // Download the meme image
-function downloadMeme(url) {
-    fetch(`http://localhost:3000/download?url=${encodeURIComponent(url)}`)
-        .then(response => response.blob())
-        .then(blob => {
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "meme.png";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        })
-        .catch(error => console.error("❌ Error downloading meme:", error));
+function downloadMeme(url, event) {
+    event.preventDefault(); // Prevents redirection to Reddit
+
+    // Redirect the request to your backend, which fetches the image
+    const a = document.createElement("a");
+    a.href = `http://localhost:3000/download?url=${encodeURIComponent(url)}`;
+    a.download = "meme.jpg"; // Forces download
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
-// Load more memes when button is clicked
-loadMoreButton.addEventListener("click", fetchMemes);
 
 // Show or hide load more button
-function toggleLoadMoreButton(visible) {
-    const button = document.getElementById("load-more-btn"); // Updated ID
-    if (button) {
-        button.style.display = visible ? "block" : "none";
-    } else {
-        console.warn("⚠️ Attempted to toggle a missing Load More button.");
+function showLoadMoreButton() {
+    let loadMoreBtn = document.getElementById("load-more-btn");
+    
+    if (!loadMoreBtn) {
+        loadMoreBtn = document.createElement("button");
+        loadMoreBtn.id = "load-more-btn";
+        loadMoreBtn.innerText = "🔄 Load More Memes";
+        loadMoreBtn.classList.add("load-more-btn");
+        loadMoreBtn.addEventListener("click", () => fetchMemes(true));
+        
+        document.body.appendChild(loadMoreBtn); // Add button at the bottom
     }
+    
+    loadMoreBtn.style.display = after ? "block" : "none"; // Hide if no more memes
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("✅ DOM fully loaded. Fetching memes...");
-    loadUploadedMemes(); // Load uploaded memes
-    fetchMemes();
+//load more button
+document.getElementById("load-more-btn").addEventListener("click", function () {
+    loadMoreMemes()
 });
 
-// Function to load and display uploaded memes
-function loadUploadedMemes() {
-    const storedMemes = JSON.parse(localStorage.getItem("uploadedMemes")) || [];
-    const memeContainer = document.getElementById("meme-container");
-
-    storedMemes.forEach(memeUrl => {
-        let memeCard = document.createElement("div");
-        memeCard.classList.add("meme-card");
-
-        memeCard.innerHTML = `
-            <img src="${memeUrl}" alt="Uploaded Meme">
-            <div class="actions">
-                <button class="like-btn">👍 <span>0</span> Likes</button>
-                <button onclick="downloadMeme('${memeUrl}')">⬇️ Download</button>
-                <button onclick="shareMeme('${memeUrl}')">📤 Share</button>
-            </div>
-        `;
-
-        memeContainer.prepend(memeCard); // Add at the top
-    });
-}
+window.onload = fetchMemes

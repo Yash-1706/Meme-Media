@@ -28,3 +28,36 @@ button {
     border-radius: 5px;
 }
 button:hover { background: #0056b3; }
+#uploaded-memes-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+.uploaded-meme {
+    width: 200px;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.meme-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.like-btn {
+    margin-top: 5px;
+    padding: 5px 10px;
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.like-btn:hover {
+    background: #cc0000;
+}

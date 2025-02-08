@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = 3000;
+const axios = require("axios")
 
 // Middleware
 app.use(express.json());
@@ -37,37 +38,27 @@ app.get('/download', async (req, res) => {
 
     try {
         console.log(`🔗 Fetching image from URL: ${imageUrl}`);
-        
-        // Use built-in fetch
-        const response = await fetch(imageUrl, {
+
+        // Fetch image with axios (handles streaming properly)
+        const response = await axios.get(imageUrl, {
+            responseType: "stream", // Get response as a stream
             headers: {
-                "User-Agent": "Mozilla/5.0", 
-                "Referer": "https://www.reddit.com/", 
+                "User-Agent": "Mozilla/5.0",
+                "Referer": "https://www.reddit.com/",
             }
         });
 
-        if (!response.ok) {
-            console.error(`❌ Failed to fetch image. Status: ${response.status}`);
-            throw new Error(`Failed to fetch image. Status: ${response.status}`);
-        }
+        console.log(`🖼️ Image content type: ${response.headers["content-type"]}`);
 
-        const contentType = response.headers.get("content-type");
-        console.log(`🖼️ Image content type: ${contentType}`);
-        
-        const imageBuffer = await response.arrayBuffer(); // <-- Fix here (use arrayBuffer)
-        console.log(`📦 Image size: ${imageBuffer.byteLength} bytes`);
-
-        if (imageBuffer.byteLength < 100) {
-            console.error("❌ Image is too small (possibly invalid)");
-            return res.status(500).send("❌ Error downloading meme");
-        }
-
+        // Set response headers
         res.setHeader("Content-Disposition", "attachment; filename=meme.png");
-        res.setHeader("Content-Type", contentType || "image/png");
-        res.send(Buffer.from(imageBuffer)); // <-- Convert arrayBuffer to Buffer
+        res.setHeader("Content-Type", response.headers["content-type"] || "image/png");
+
+        // Stream the image directly to the client
+        response.data.pipe(res);
 
     } catch (error) {
-        console.error("❌ Error processing download:", error);
+        console.error("❌ Error processing download:", error.message);
         res.status(500).send("❌ Error downloading meme");
     }
 });
@@ -77,3 +68,5 @@ app.get('/download', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
+
+
