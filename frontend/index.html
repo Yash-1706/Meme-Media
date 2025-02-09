@@ -1,28 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meme Media</title>
+    <title>MemeMedia</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
-    <header>
-        <h1>Meme Media</h1>
-        <nav>
-            <button type="button" class="nav-btn active">For You</button>
-            <a href="upload.html">Upload Meme</a>
-        </nav>
-    </header>
-
-
-    <div id="meme-container"></div>
-    <button id="load-more-btn" onclick="loadMoreMemes()" style="display: none;">Load More</button>
-
+    <nav>
+        <div class="logo">MemeMedia</div>
+        <div class="nav-buttons">
+            <button onclick="window.location.href='upload.html'" class="upload-btn">Upload Meme</button>
+        </div>
+    </nav>
+    
+    <main id="meme-container"></main>
+    
+    <div class="load-more">
+        <button id="load-more-btn">Load More</button>
+    </div>
 
     <script src="script.js"></script>
 </body>
-
 </html>
+

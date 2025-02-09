@@ -1,28 +1,40 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Meme</title>
+    <title>Upload Meme - MemeMedia</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="upload.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <nav>
+        <div class="logo">MemeMedia</div>
+        <button onclick="window.location.href='index.html'" class="nav-back">Back to Feed</button>
+    </nav>
 
-    <h2>Upload Your Meme</h2>
-    <div class="upload-container">
-        <input type="file" id="fileInput" accept="image/*">
-        <br>
-        <img id="preview" alt="Preview">
-        <br>
-        <button id="uploadBtn" style="display: none;">Upload Meme</button>
-    </div>
+    <main class="upload-container">
+        <h1>Upload Your Meme</h1>
+        <form id="upload-form">
+            <div class="upload-area" id="drop-zone">
+                <img id="preview" style="display: none; max-width: 100%; max-height: 400px;">
+                <div class="upload-prompt">
+                    <p>Drag and drop your meme here</p>
+                    <p>or</p>
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                    <button type="button" onclick="document.getElementById('file-input').click()">Choose File</button>
+                </div>
+            </div>
+            <button type="submit" class="upload-submit">Upload Meme</button>
+        </form>
 
-    <div id="uploaded-memes-section">
-        <h2>Uploaded Memes</h2>
-        <div id="uploaded-memes-container"></div>
-    </div>    
+        <div class="uploaded-memes">
+            <h2>Your Uploaded Memes</h2>
+            <div id="uploaded-memes-container"></div>
+        </div>
+    </main>
 
     <script src="upload.js"></script>
-
 </body>
 </html>

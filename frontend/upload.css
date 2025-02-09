@@ -1,63 +1,125 @@
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f4f4f4;
-}
 .upload-container {
-    max-width: 400px;
-    margin: auto;
-    padding: 20px;
-    border: 2px dashed #ccc;
-    border-radius: 10px;
-    background-color: #fff;
-}
-#preview {
-    max-width: 100%;
-    height: auto;
-    margin-top: 15px;
-    display: none;
-    border-radius: 5px;
-}
-button {
-    margin-top: 10px;
-    padding: 10px;
-    border: none;
-    background: #007bff;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-}
-button:hover { background: #0056b3; }
-#uploaded-memes-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-}
-.uploaded-meme {
-    width: 200px;
-    height: auto;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
 
-.meme-wrapper {
+.upload-container h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    background: linear-gradient(45deg, #22d3ee, #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    background: rgba(30, 41, 59, 0.95);
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.upload-area.dragover {
+    border-color: #22d3ee;
+    background: rgba(34, 211, 238, 0.1);
+}
+
+.upload-prompt {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 1.25rem;
 }
 
-.like-btn {
-    margin-top: 5px;
-    padding: 5px 10px;
-    background: #ff4d4d;
+.upload-prompt p {
+    color: #94a3b8;
+}
+
+.uploaded-memes {
+    margin-top: 3rem;
+}
+
+.uploaded-memes h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(45deg, #22d3ee, #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.upload-prompt button {
+    padding: 0.875rem 2rem;
+    background: linear-gradient(45deg, #22d3ee, #818cf8);
     color: white;
     border: none;
+    border-radius: 12px;
     cursor: pointer;
-    border-radius: 5px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
 }
 
-.like-btn:hover {
-    background: #cc0000;
+.upload-prompt button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4);
+}
+
+.upload-submit {
+    width: 100%;
+    padding: 1.125rem;
+    background: linear-gradient(45deg, #22d3ee, #818cf8);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.125rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+}
+
+.upload-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4);
+}
+
+.nav-back {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-back:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 640px) {
+    .upload-container {
+        padding: 0 1rem;
+    }
+    
+    .upload-container h1 {
+        font-size: 1.5rem;
+    }
+    
+    .upload-area {
+        padding: 1.5rem;
+        min-height: 250px;
+    }
 }
