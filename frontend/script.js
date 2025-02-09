@@ -72,7 +72,7 @@ async function shareMeme(url) {
 
 async function downloadMeme(url, title = 'meme') {
     try {
-        const proxyUrl = `http://localhost:3000/proxy?url=${encodeURIComponent(url)}`;
+        const proxyUrl = `https://your-render-app.onrender.com/proxy?url=${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl);
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);

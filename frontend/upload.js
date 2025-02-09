@@ -5,22 +5,16 @@ const uploadForm = document.getElementById('upload-form');
 const uploadPrompt = document.querySelector('.upload-prompt');
 const uploadedMemesContainer = document.getElementById('uploaded-memes-container');
 
-// Load liked memes from localStorage
+// Load liked memes and uploaded memes from localStorage
 let likedMemes = JSON.parse(localStorage.getItem('likedMemes')) || {};
+let uploadedMemes = JSON.parse(localStorage.getItem('uploadedMemes')) || [];
 
-// Fetch and display uploaded memes
-async function fetchUploadedMemes() {
-    try {
-        const response = await fetch('http://localhost:3000/api/memes'); // ✅ Fixed URL
-        if (!response.ok) throw new Error('Failed to fetch memes');
-        const data = await response.json();
-        return data.memes;
-    } catch (error) {
-        console.error('Error fetching uploaded memes:', error);
-        return [];
-    }
+// Function to save uploaded memes to localStorage
+function saveUploadedMemes() {
+    localStorage.setItem('uploadedMemes', JSON.stringify(uploadedMemes));
 }
 
+// Function to create a meme card for display
 function createMemeCard(meme) {
     const card = document.createElement('div');
     card.className = 'meme-card';
@@ -28,7 +22,7 @@ function createMemeCard(meme) {
     const isLiked = likedMemes[memeId];
 
     card.innerHTML = `
-        <img src="http://localhost:3000${meme.url}" alt="Uploaded Meme" class="meme-image" loading="lazy">
+        <img src="${meme.url}" alt="Uploaded Meme" class="meme-image" loading="lazy">
         <div class="meme-actions">
             <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${memeId}', this)">
                 ${isLiked ? '❤️' : '🤍'} Like
@@ -44,10 +38,10 @@ function createMemeCard(meme) {
     return card;
 }
 
-async function loadUploadedMemes() {
-    const memes = await fetchUploadedMemes();
+// Function to display uploaded memes from localStorage
+function loadUploadedMemes() {
     uploadedMemesContainer.innerHTML = '';
-    memes.forEach(meme => {
+    uploadedMemes.forEach(meme => {
         const card = createMemeCard(meme);
         uploadedMemesContainer.appendChild(card);
     });
@@ -79,6 +73,7 @@ fileInput.addEventListener('change', (e) => {
     }
 });
 
+// Function to handle file selection and preview
 function handleFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -89,6 +84,7 @@ function handleFile(file) {
     reader.readAsDataURL(file);
 }
 
+// Function to toggle like status
 function toggleLike(memeId, button) {
     likedMemes[memeId] = !likedMemes[memeId];
     localStorage.setItem('likedMemes', JSON.stringify(likedMemes));
@@ -96,6 +92,7 @@ function toggleLike(memeId, button) {
     button.innerHTML = likedMemes[memeId] ? '❤️ Like' : '🤍 Like';
 }
 
+// Function to share meme
 async function shareMeme(url) {
     try {
         await navigator.share({
@@ -108,31 +105,17 @@ async function shareMeme(url) {
     }
 }
 
+// Function to download meme
 async function downloadMeme(url) {
-    try {
-        const proxyUrl = `http://localhost:3000/proxy?url=${encodeURIComponent(url)}`; // ✅ Use backend proxy to bypass CORS
-        const response = await fetch(proxyUrl);
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch image');
-        }
-
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `meme-${Date.now()}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-        console.error('Error downloading meme:', error);
-        alert('Failed to download meme. Please try again.');
-    }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `meme-${Date.now()}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
+// Handle upload form submission
 uploadForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const file = fileInput.files[0];
@@ -141,30 +124,23 @@ uploadForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const formData = new FormData();
-    formData.append('meme', file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const newMeme = {
+            id: Date.now().toString(),
+            url: e.target.result
+        };
+        uploadedMemes.push(newMeme);
+        saveUploadedMemes();
+        alert('Meme uploaded successfully!');
 
-    try {
-        const response = await fetch('http://localhost:3000/api/upload', { 
-            method: 'POST',
-            body: formData
-        });
-        console.log(response)
-
-
-        if (response.ok) {
-            alert('Meme uploaded successfully!');
-            preview.style.display = 'none';
-            uploadPrompt.style.display = 'flex';
-            uploadForm.reset();
-            await loadUploadedMemes();
-        } else {
-            throw new Error('Upload failed');
-        }
-    } catch (error) {
-        console.error('Error uploading meme:', error);
-        alert('Failed to upload meme. Please try again.');
-    }
+        // Reset form and update display
+        preview.style.display = 'none';
+        uploadPrompt.style.display = 'flex';
+        uploadForm.reset();
+        loadUploadedMemes();
+    };
+    reader.readAsDataURL(file);
 });
 
 // Initial load of uploaded memes
